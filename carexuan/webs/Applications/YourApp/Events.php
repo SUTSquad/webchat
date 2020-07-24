@@ -1,6 +1,4 @@
 <?php
-
-
 //declare(ticks=1);
 
 use \GatewayWorker\Lib\Gateway;
@@ -27,7 +25,7 @@ class Events
         } catch (PDOException $e) {
             die($e->getMessage());
         }
-        print_r(self::$pdo->query("select * from user")->fetchAll(PDO::FETCH_ASSOC));
+        self::$groupIds = array_column(self::$pdo->query("select id from room")->fetchAll(PDO::FETCH_ASSOC),'id');
     }
 
     /**
@@ -42,6 +40,13 @@ class Events
         Gateway::sendToClient($client_id, "Hello $client_id\r\n");
         // 向所有人发送
         Gateway::sendToAll("$client_id login\r\n");
+    }
+
+    public static function onWebSocketConnect($client_id,$data){
+        $token = trim($data['get']['token']);
+        $sql = "select id from user where token='{$token}'";
+        $userid = self::$pdo->query($sql)->fetch(PDO::FETCH_ASSOC)['id'];
+        Gateway::bindUid($client_id,$userid);
     }
 
     /**
